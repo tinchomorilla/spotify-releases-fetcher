@@ -1,0 +1,5 @@
+# Ignorar la carpeta target
+/target
+
+# Ignorar el archivo rustc_info.json
+target/.rustc_info.json
