@@ -3,3 +3,6 @@
 
 # Ignorar el archivo rustc_info.json
 target/.rustc_info.json
+
+# Ignorar el archivo .env
+.env
