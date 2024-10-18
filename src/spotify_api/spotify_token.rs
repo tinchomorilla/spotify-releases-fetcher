@@ -1,6 +1,10 @@
+use std::env;
+
+use base64::encode;
 use reqwest::Error;
 use serde::Deserialize;
-use base64::encode;
+use dotenv::dotenv;
+
 
 #[derive(Deserialize)]
 pub struct SpotifyToken {
@@ -8,11 +12,12 @@ pub struct SpotifyToken {
 }
 
 impl SpotifyToken {
-    pub async fn new(client_id: &str, client_secret: &str) -> Result<Self, Error> {
+    pub async fn new() -> Result<Self, Error> {
+        dotenv().ok();
+        let client_id = env::var("SPOTIFY_CLIENT_ID").expect("Client ID not found");
+        let client_secret = env::var("SPOTIFY_CLIENT_SECRET").expect("Client Secret not found");
         let client = reqwest::Client::new();
-        let params = [
-            ("grant_type", "client_credentials"),
-        ];
+        let params = [("grant_type", "client_credentials")];
 
         // Encode client_id and client_secret
         let credentials = format!("{}:{}", client_id, client_secret);
@@ -32,5 +37,4 @@ impl SpotifyToken {
     pub fn get_access_token(&self) -> &str {
         &self.access_token
     }
-
 }
