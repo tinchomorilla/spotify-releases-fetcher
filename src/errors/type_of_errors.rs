@@ -4,6 +4,8 @@ use std::fmt;
 pub enum Errors {
     NoAlbumsFound,
     ReqwestError(reqwest::Error),
+    NoTracksFound,
+    SerdeJsonError(serde_json::Error),
 }
 
 impl fmt::Display for Errors {
@@ -11,6 +13,8 @@ impl fmt::Display for Errors {
         match self {
             Errors::NoAlbumsFound => write!(f, "No albums found"),
             Errors::ReqwestError(e) => write!(f, "Request error: {}", e),
+            Errors::NoTracksFound => write!(f, "No tracks found"),
+            Errors::SerdeJsonError(e) => write!(f, "Serde JSON error: {}", e),
         }
     }
 }
@@ -18,5 +22,11 @@ impl fmt::Display for Errors {
 impl From<reqwest::Error> for Errors {
     fn from(error: reqwest::Error) -> Self {
         Errors::ReqwestError(error)
+    }
+}
+
+impl From<serde_json::Error> for Errors {
+    fn from(error: serde_json::Error) -> Self {
+        Errors::SerdeJsonError(error)
     }
 }
