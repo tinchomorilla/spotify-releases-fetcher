@@ -2,7 +2,8 @@
 mod spotify_token;
 
 use ::futures::future::join_all;
-use spotify_token::SpotifyToken;
+use spotify_token::get_token;
+use spotify_token::initialize_token;
 
 #[path = "errors/type_of_errors.rs"]
 mod type_of_errors;
@@ -15,22 +16,6 @@ use album_information::Album;
 use reqwest;
 use serde_json::json;
 use serde_json::Value;
-
-async fn get_albums_tracks(albums: Vec<Album>) -> Result<String, Errors> {
-    let track_futures = albums
-        .iter()
-        .map(|album| get_album_data(album))
-        .collect::<Vec<_>>();
-    let album_tracks_list: Vec<_> = join_all(track_futures)
-        .await
-        .into_iter()
-        .collect::<Result<Vec<_>, _>>()
-        .expect("Error getting album tracks");
-
-    let json_output = serde_json::to_string_pretty(&album_tracks_list)?;
-
-    Ok(json_output)
-}
 
 async fn get_album_data(album: &Album) -> Result<Value, Errors> {
     let url = format!(
@@ -49,6 +34,22 @@ async fn get_album_data(album: &Album) -> Result<Value, Errors> {
         "track_names": track_names
     });
     Ok(album_data)
+}
+
+async fn get_albums_tracks(albums: Vec<Album>) -> Result<String, Errors> {
+    let track_futures = albums
+        .iter()
+        .map(|album| get_album_data(album))
+        .collect::<Vec<_>>();
+    let album_tracks_list: Vec<_> = join_all(track_futures)
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()
+        .expect("Error getting album tracks");
+
+    let json_output = serde_json::to_string_pretty(&album_tracks_list)?;
+
+    Ok(json_output)
 }
 
 async fn get_new_album_releases() -> Result<Vec<Album>, Errors> {
@@ -76,7 +77,7 @@ async fn get_new_album_releases() -> Result<Vec<Album>, Errors> {
 }
 
 async fn make_http_get_request(url: String) -> Result<reqwest::Response, Errors> {
-    let token = SpotifyToken::new().await?;
+    let token = get_token();
     let client = reqwest::Client::new();
 
     let response = client
@@ -90,9 +91,12 @@ async fn make_http_get_request(url: String) -> Result<reqwest::Response, Errors>
 #[tokio::main]
 async fn main() {
     let start = std::time::Instant::now();
+    // Initialize the token
+    initialize_token().expect("Failed to initialize token");
+
     let albums = get_new_album_releases()
         .await
-        .expect("Error getting new albums");
+        .expect("Error getting new albums"); //
     let albums_tracks = get_albums_tracks(albums)
         .await
         .expect("Error getting new albums tracks");
