@@ -1,7 +1,6 @@
 #[path = "spotify_api/spotify_token.rs"]
 mod spotify_token;
 
-
 use ::futures::future::join_all;
 use spotify_token::SpotifyToken;
 
@@ -29,18 +28,14 @@ async fn get_albums_tracks(albums: Vec<Album>) -> Result<String, Errors> {
         .expect("Error getting album tracks");
 
     let json_output = serde_json::to_string_pretty(&album_tracks_list)?;
-    
+
     Ok(json_output)
 }
 
-async fn make_http_request(album: &Album) -> Result<reqwest::Response, Errors> {
+async fn make_http_request(url: String) -> Result<reqwest::Response, Errors> {
     let token = SpotifyToken::new().await?;
     let client = reqwest::Client::new();
 
-    let url = format!(
-        "https://api.spotify.com/v1/albums/{}/tracks",
-        album.get_id()
-    );
     let response = client
         .get(&url)
         .bearer_auth(token.get_access_token())
@@ -50,7 +45,11 @@ async fn make_http_request(album: &Album) -> Result<reqwest::Response, Errors> {
 }
 
 async fn get_album_data(album: &Album) -> Result<Value, Errors> {
-    let response = make_http_request(&album).await?;
+    let url = format!(
+        "https://api.spotify.com/v1/albums/{}/tracks",
+        album.get_id()
+    );
+    let response = make_http_request(url).await?;
     let json: Value = response.json().await?;
     let items = json["items"].as_array().ok_or(Errors::NoTracksFound)?;
     let track_names: Vec<String> = items
