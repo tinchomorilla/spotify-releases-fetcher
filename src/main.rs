@@ -41,7 +41,10 @@ async fn get_albums_tracks(albums: Vec<Album>) -> Result<String, Errors> {
         .iter()
         .map(|album| get_album_data(album))
         .collect::<Vec<_>>();
-    let album_tracks_list = join_all(track_futures).await.into_iter().collect::<Result<Vec<_>, _>>()?;
+    let album_tracks_list = join_all(track_futures)
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()?;
 
     serde_json::to_string_pretty(&album_tracks_list).map_err(Errors::from)
 }
@@ -85,7 +88,7 @@ async fn make_http_get_request(url: String) -> Result<reqwest::Response, Errors>
 #[tokio::main]
 async fn main() -> Result<(), Errors> {
     let start = std::time::Instant::now();
-    // Initialize the token
+    
     initialize_token()?;
 
     let albums = get_new_album_releases().await?;
