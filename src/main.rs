@@ -41,15 +41,9 @@ async fn get_albums_tracks(albums: Vec<Album>) -> Result<String, Errors> {
         .iter()
         .map(|album| get_album_data(album))
         .collect::<Vec<_>>();
-    let album_tracks_list: Vec<_> = join_all(track_futures)
-        .await
-        .into_iter()
-        .collect::<Result<Vec<_>, _>>()
-        .expect("Error getting album tracks");
+    let album_tracks_list = join_all(track_futures).await.into_iter().collect::<Result<Vec<_>, _>>()?;
 
-    let json_output = serde_json::to_string_pretty(&album_tracks_list)?;
-
-    Ok(json_output)
+    serde_json::to_string_pretty(&album_tracks_list).map_err(Errors::from)
 }
 
 async fn get_new_album_releases() -> Result<Vec<Album>, Errors> {
@@ -89,18 +83,15 @@ async fn make_http_get_request(url: String) -> Result<reqwest::Response, Errors>
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Errors> {
     let start = std::time::Instant::now();
     // Initialize the token
-    initialize_token().expect("Failed to initialize token");
+    initialize_token()?;
 
-    let albums = get_new_album_releases()
-        .await
-        .expect("Error getting new albums"); //
-    let albums_tracks = get_albums_tracks(albums)
-        .await
-        .expect("Error getting new albums tracks");
+    let albums = get_new_album_releases().await?;
+    let albums_tracks = get_albums_tracks(albums).await?;
 
     println!("{}", albums_tracks);
     println!("Time elapsed: {:?}", start.elapsed());
+    Ok(())
 }
