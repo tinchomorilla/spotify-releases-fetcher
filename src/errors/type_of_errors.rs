@@ -1,4 +1,6 @@
 use std::fmt;
+use std::error::Error as StdError;
+
 
 #[derive(Debug)]
 pub enum Errors {
@@ -6,7 +8,9 @@ pub enum Errors {
     ReqwestError(reqwest::Error),
     NoTracksFound,
     SerdeJsonError(serde_json::Error),
+    Other(String),
 }
+
 
 impl fmt::Display for Errors {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -15,13 +19,22 @@ impl fmt::Display for Errors {
             Errors::ReqwestError(e) => write!(f, "Request error: {}", e),
             Errors::NoTracksFound => write!(f, "No tracks found"),
             Errors::SerdeJsonError(e) => write!(f, "Serde JSON error: {}", e),
+            Errors::Other(e) => write!(f, "Other error: {}", e),
         }
     }
 }
 
+impl std::error::Error for Errors {}
+
 impl From<reqwest::Error> for Errors {
     fn from(error: reqwest::Error) -> Self {
         Errors::ReqwestError(error)
+    }
+}
+
+impl From<Box<dyn StdError>> for Errors {
+    fn from(error: Box<dyn StdError>) -> Self {
+        Errors::Other(error.to_string())
     }
 }
 
